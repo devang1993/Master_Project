@@ -213,23 +213,12 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
 	cout << "\nstarting icp" << endl;
-	
-	std::cout << "PointCloud1 before filtering has: " << cloud1->points.size() << " data points." << std::endl; //*
-	std::cout << "PointCloud2 before filtering has: " << cloud2->points.size() << " data points." << std::endl; //*
-
-	pcl::VoxelGrid<RGB_Cloud> grid;
-	grid.setLeafSize(0.01f, 0.01f, 0.01f);
-	grid.setInputCloud(cloud1);
-	grid.filter(*cloud1);
-	Load_PCDFile(cloud1);
-	grid.setInputCloud(cloud2);
-	grid.filter(*cloud2);
-	Load_PCDFile(cloud2);
-	pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
 
 	// Euclidean Cluster Extraction
 	cluster(cloud1);
 	cluster(cloud2);
+
+	pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
 
 	cout << "\nset Maximum number of iterations:   ";
 	cin >> i;
@@ -237,13 +226,13 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	icp.setInputSource(cloud2);
 	icp.setInputTarget(cloud1);
 	icp.setTransformationRotationEpsilon(0.95);
-	icp.setMaxCorrespondenceDistance(0.5);
+	icp.setMaxCorrespondenceDistance(0.05);
 	icp.align(*cloud);
 	Load_PCDFile(cloud);
 	if (icp.hasConverged())
 	{
 		std::cout << "\nICP has converged, score is " << icp.getFitnessScore() << std::endl;
-		std::cout << "\n Final transformation matrix is : \n" << icp.getFinalTransformation();
+		std::cout << "\n Final transformation matrix is : \n" << icp.getFinalTransformation() << std::endl;
 		return EXIT_SUCCESS;
 	}
 	else
@@ -261,6 +250,14 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 
 cloud_pointer cluster(cloud_pointer& cloud)
 {
+
+	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
+
+	pcl::VoxelGrid<RGB_Cloud> grid;
+	grid.setLeafSize(0.005f, 0.005f, 0.005f);
+	grid.setInputCloud(cloud);
+	grid.filter(*cloud);
+	Load_PCDFile(cloud);
 
 	std::cout << "PointCloud after filtering has: " << cloud->points.size() << " data points." << std::endl; //*
 
@@ -312,8 +309,8 @@ cloud_pointer cluster(cloud_pointer& cloud)
 	std::vector<pcl::PointIndices> cluster_indices;
 	pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
 	ec.setClusterTolerance(0.02); // 2cm
-	ec.setMinClusterSize(50);
-	ec.setMaxClusterSize(250);
+	ec.setMinClusterSize(1000);
+	ec.setMaxClusterSize(2000);
 	ec.setSearchMethod(tree);
 	ec.setInputCloud(cloud);
 	ec.extract(cluster_indices);
@@ -327,11 +324,12 @@ cloud_pointer cluster(cloud_pointer& cloud)
 		cloud_cluster->width = cloud_cluster->points.size();
 		cloud_cluster->height = 1;
 		cloud_cluster->is_dense = true;
-
+		/*
 		std::cout << "PointCloud representing the Cluster: " << cloud_cluster->points.size() << " data points." << std::endl;
 		std::stringstream ss;
 		ss << "cloud_cluster_" << j << ".pcd";
 		writer.write<pcl::PointXYZRGB>(ss.str(), *cloud_cluster, false); //*
+		*/
 		j++;
 	}
 	Load_PCDFile(cloud);
@@ -347,99 +345,119 @@ int main()
 	// Variable Declaration
 	//======================
 	bool captureLoop = true; // Loop control for generating point clouds
-	std::vector<cloud_pointer> p_cloud;
 
 	//====================
 	// Object Declaration
 	//====================
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-	boost::shared_ptr<pcl::visualization::PCLVisualizer> openCloud;
+	std::vector<cloud_pointer> p_cloud;
 
-	// Declare pointcloud object, for calculating pointclouds and texture mappings
-	rs2::pointcloud pc;
+	char keyin;
+	std::cout << "Enter Y to capture, N to load saved PCDs; " << endl;
+	cin >> keyin;
+	if (keyin == 'Y' || keyin == 'y') {
 
-	// Declare RealSense pipeline, encapsulating the actual device and sensors
-	rs2::pipeline pipe;
+		// Declare pointcloud object, for calculating pointclouds and texture mappings
+		rs2::pointcloud pc;
 
-	// Create a configuration for configuring the pipeline with a non default profile
-	rs2::config cfg;
+		// Declare RealSense pipeline, encapsulating the actual device and sensors
+		rs2::pipeline pipe;
 
-	//======================
-	// Stream configuration
-	//======================
-	cfg.enable_stream(RS2_STREAM_COLOR, 424, 240, RS2_FORMAT_BGR8, 30);
-	cfg.enable_stream(RS2_STREAM_INFRARED, 424, 240, RS2_FORMAT_Y8, 30);
-	cfg.enable_stream(RS2_STREAM_DEPTH, 424, 240, RS2_FORMAT_Z16, 30);
-
-	rs2::pipeline_profile selection = pipe.start(cfg);
-
-	rs2::device selected_device = selection.get_device();
-	auto depth_sensor = selected_device.first<rs2::depth_sensor>();
-
-	if (depth_sensor.supports(RS2_OPTION_EMITTER_ENABLED))
-	{
-		depth_sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 1.f); // Enable emitter
-		depth_sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 0.f); // Disable emitter
-	}
-	if (depth_sensor.supports(RS2_OPTION_LASER_POWER))
-	{
-		// Query min and max values:
-		auto range = depth_sensor.get_option_range(RS2_OPTION_LASER_POWER);
-		depth_sensor.set_option(RS2_OPTION_LASER_POWER, range.max); // Set max power
-		depth_sensor.set_option(RS2_OPTION_LASER_POWER, 0.f); // Disable laser
-	}
-
-	// Begin Stream with default configs
-
-	// Loop and take frame captures upon user input
-	while (captureLoop == true && i < 3) {
-
-		// Set loop flag based on user input
-		captureLoop = userInput();
-		if (captureLoop == false) { break; }
+		// Create a configuration for configuring the pipeline with a non default profile
+		rs2::config cfg;
 
 
-		// Wait for frames from the camera to settle
-		for (int i = 0; i < 30; i++) {
-			auto frames = pipe.wait_for_frames(); //Drop several frames for auto-exposure
+		//======================
+		// Stream configuration
+		//======================
+		cfg.enable_stream(RS2_STREAM_COLOR, 424, 240, RS2_FORMAT_BGR8, 30);
+		cfg.enable_stream(RS2_STREAM_INFRARED, 424, 240, RS2_FORMAT_Y8, 30);
+		cfg.enable_stream(RS2_STREAM_DEPTH, 424, 240, RS2_FORMAT_Z16, 30);
+
+		rs2::pipeline_profile selection = pipe.start(cfg);
+
+		rs2::device selected_device = selection.get_device();
+		auto depth_sensor = selected_device.first<rs2::depth_sensor>();
+
+		if (depth_sensor.supports(RS2_OPTION_EMITTER_ENABLED))
+		{
+			depth_sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 1.f); // Enable emitter
+			depth_sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 0.f); // Disable emitter
+		}
+		if (depth_sensor.supports(RS2_OPTION_LASER_POWER))
+		{
+			// Query min and max values:
+			auto range = depth_sensor.get_option_range(RS2_OPTION_LASER_POWER);
+			depth_sensor.set_option(RS2_OPTION_LASER_POWER, range.max); // Set max power
+			depth_sensor.set_option(RS2_OPTION_LASER_POWER, 0.f); // Disable laser
 		}
 
-		// Capture a single frame and obtain depth + RGB values from it    
-		auto frames = pipe.wait_for_frames();
-		auto depth = frames.get_depth_frame();
-		auto RGB = frames.get_color_frame();
+		// Begin Stream with default configs
 
-		// Map Color texture to each point
-		pc.map_to(RGB);
+		// Loop and take frame captures upon user input
+		while (captureLoop == true && i < 3) {
 
-		// Generate Point Cloud
-		auto points = pc.calculate(depth);
+			// Set loop flag based on user input
+			captureLoop = userInput();
+			if (captureLoop == false) { break; }
 
-		// Convert generated Point Cloud to PCL Formatting
-		cloud_pointer cloud = PCL_Conversion(points, RGB);
 
-		//========================================
-		// Filter PointCloud (PassThrough Method)
-		//========================================
-		pcl::PassThrough<pcl::PointXYZRGB> Cloud_Filter; // Create the filtering object
-		Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
-		Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
-		Cloud_Filter.setFilterLimits(0.0, 2.0);      // Set accepted interval values
-		Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
+			// Wait for frames from the camera to settle
+			for (int i = 0; i < 30; i++) {
+				auto frames = pipe.wait_for_frames(); //Drop several frames for auto-exposure
+			}
 
-		p_cloud.push_back(cloud);
+			// Capture a single frame and obtain depth + RGB values from it    
+			auto frames = pipe.wait_for_frames();
+			auto depth = frames.get_depth_frame();
+			auto RGB = frames.get_color_frame();
 
-		cout << " Pointcloud successfully generated. " << endl;
+			// Map Color texture to each point
+			pc.map_to(RGB);
 
-		//Load generated PCD file for viewing
-		Load_PCDFile(p_cloud.at(i - 1));
-		i++; // Increment File Name
+			// Generate Point Cloud
+			auto points = pc.calculate(depth);
 
-	}//End-while
+			// Convert generated Point Cloud to PCL Formatting
+			cloud_pointer cloud = PCL_Conversion(points, RGB);
 
-	PCL_ICP(p_cloud.at(0), p_cloud.at(1)); // Run ICP on the pointclouds
+			//========================================
+			// Filter PointCloud (PassThrough Method)
+			//========================================
+			pcl::PassThrough<pcl::PointXYZRGB> Cloud_Filter; // Create the filtering object
+			Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
+			Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
+			Cloud_Filter.setFilterLimits(0.0, 0.38);      // Set accepted interval values
+			Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
 
-	system("pause");
+			p_cloud.push_back(cloud);
+
+			cout << " Pointcloud successfully generated. " << endl;
+
+			//Load generated PCD file for viewing
+			Load_PCDFile(p_cloud.at(i - 1));
+			i++; // Increment File Name
+
+		}//End-while
+	}
+	else if (keyin == 'N' || keyin == 'n') {
+		while (i < 3) {
+			cout << "\nReading Pointcloud" << i << endl;
+			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud);
+			p_cloud.push_back(cloud);
+			Load_PCDFile(p_cloud.at(i - 1));
+			i++;
+		}
+	}
+	else {
+		return (-1);
+	}
+	Load_PCDFile(p_cloud[0]);
+	Load_PCDFile(p_cloud[1]);
+
+	PCL_ICP(p_cloud[0], p_cloud[1]); // Run ICP on the pointclouds
+
+	std::system("pause");
 
 	return EXIT_SUCCESS;
 }
