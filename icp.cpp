@@ -225,7 +225,7 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	icp.setMaximumIterations(i);
 	icp.setInputSource(cloud2);
 	icp.setInputTarget(cloud1);
-	icp.setTransformationRotationEpsilon(0.95);
+	icp.setTransformationEpsilon(0.95);
 	icp.setMaxCorrespondenceDistance(0.05);
 	icp.align(*cloud);
 	Load_PCDFile(cloud);
@@ -443,6 +443,7 @@ int main()
 	else if (keyin == 'N' || keyin == 'n') {
 		while (i < 3) {
 			cout << "\nReading Pointcloud" << i << endl;
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud);
 			p_cloud.push_back(cloud);
 			Load_PCDFile(p_cloud.at(i - 1));
