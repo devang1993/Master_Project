@@ -14,5 +14,5 @@ http://pointclouds.org/documentation/tutorials/cluster_extraction.php#cluster-ex
 http://www.pointclouds.org/documentation/tutorials/correspondence_grouping.php
 
 Sample .pcd files
-https://github.com/PointCloudLibrary/data/tree/master/segmentation/mOSD/test
-https://github.com/jvgomez/irml/tree/master/pointclouds/database/3dmodelsviews
+- https://github.com/PointCloudLibrary/data/tree/master/segmentation/mOSD/test
+- https://github.com/jvgomez/irml/tree/master/pointclouds/database/3dmodelsviews
