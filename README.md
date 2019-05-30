@@ -12,3 +12,6 @@ http://pointclouds.org/documentation/tutorials/cluster_extraction.php#cluster-ex
 
 3D Object Recognition based on Correspondence Grouping
 http://www.pointclouds.org/documentation/tutorials/correspondence_grouping.php
+
+Sample .pcd files
+https://github.com/PointCloudLibrary/data/tree/master/segmentation/mOSD/test
