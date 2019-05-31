@@ -312,7 +312,7 @@ computeCloudResolution(const pcl::PointCloud<PointType>::ConstPtr &cloud)
 //Euclidean Cluster Extraxtion
 //============================
 
-cloud_pointer cluster(cloud_pointer& cloud)
+/*cloud_pointer cluster(cloud_pointer& cloud)
 {
 
 	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
@@ -321,7 +321,6 @@ cloud_pointer cluster(cloud_pointer& cloud)
 	grid.setLeafSize(0.005f, 0.005f, 0.005f);
 	grid.setInputCloud(cloud);
 	grid.filter(*cloud);
-	Load_PCDFile(cloud);
 
 	std::cout << "PointCloud after filtering has: " << cloud->points.size() << " data points." << std::endl; //*
 
@@ -373,8 +372,8 @@ cloud_pointer cluster(cloud_pointer& cloud)
 	std::vector<pcl::PointIndices> cluster_indices;
 	pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
 	ec.setClusterTolerance(0.01); // 2cm
-	ec.setMinClusterSize(100);
-	ec.setMaxClusterSize(2000); //init 25,000
+	ec.setMinClusterSize(10000);
+	ec.setMaxClusterSize(60000); //init 25,000
 	ec.setSearchMethod(tree);
 	ec.setInputCloud(cloud);
 	ec.extract(cluster_indices);
@@ -393,22 +392,22 @@ cloud_pointer cluster(cloud_pointer& cloud)
 		std::stringstream ss;
 		ss << "cloud_cluster_" << j << ".pcd";
 		writer.write<pcl::PointXYZRGB>(ss.str(), *cloud_cluster, false); //*
-		*/
+
 		j++;
 	}
 	Load_PCDFile(cloud);
 	return cloud;
-}
+}*/
 
 //==========================
 // 3D Corresponence Grouping
 //==========================
 
 int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
-	
+
 	// Euclidean Cluster Extraction
-	cluster(cloud1);
-	cluster(cloud2);
+	//cluster(cloud1);
+	//cluster(cloud2);
 
 	pcl::PointCloud<PointType>::Ptr model(new pcl::PointCloud<PointType>());
 	pcl::PointCloud<PointType>::Ptr model_keypoints(new pcl::PointCloud<PointType>());
@@ -422,9 +421,9 @@ int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
 	model = cloud1;
 	scene = cloud2;
 
-	//
+	//==============================
 	//  Set up resolution invariance
-	//
+	//==============================
 	if (use_cloud_resolution_)
 	{
 		float resolution = static_cast<float> (computeCloudResolution(model));
@@ -444,9 +443,11 @@ int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
 		std::cout << "SHOT descriptor radius: " << descr_rad_ << std::endl;
 		std::cout << "Clustering bin size:    " << cg_size_ << std::endl << std::endl;
 	}
-	//
+
+	//=================
 	//  Compute Normals
-	//
+	//=================
+
 	pcl::NormalEstimationOMP<PointType, NormalType> norm_est;
 	norm_est.setKSearch(10);
 	norm_est.setInputCloud(model);
@@ -455,9 +456,9 @@ int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
 	norm_est.setInputCloud(scene);
 	norm_est.compute(*scene_normals);
 
-	//
+	//========================================
 	//  Downsample Clouds to Extract keypoints
-	//
+	//========================================
 
 	pcl::UniformSampling<PointType> uniform_sampling;
 	uniform_sampling.setInputCloud(model);
@@ -470,9 +471,10 @@ int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
 	uniform_sampling.filter(*scene_keypoints);
 	std::cout << "Scene total points: " << scene->size() << "; Selected Keypoints: " << scene_keypoints->size() << std::endl;
 
-	//
+	//==================================
 	//  Compute Descriptor for keypoints
-	//
+	//==================================
+
 	pcl::SHOTEstimationOMP<PointType, NormalType, DescriptorType> descr_est;
 	descr_est.setRadiusSearch(descr_rad_);
 
@@ -486,9 +488,10 @@ int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
 	descr_est.setSearchSurface(scene);
 	descr_est.compute(*scene_descriptors);
 
-	//
+	//==============================================
 	//  Find Model-Scene Correspondences with KdTree
-	//
+	//==============================================
+
 	pcl::CorrespondencesPtr model_scene_corrs(new pcl::Correspondences());
 
 	pcl::KdTreeFLANN<DescriptorType> match_search;
@@ -512,18 +515,22 @@ int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
 	}
 	std::cout << "Correspondences found: " << model_scene_corrs->size() << std::endl;
 
-	//
+	//===================
 	//  Actual Clustering
-	//
+	//===================
 	std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f> > rototranslations;
 	std::vector<pcl::Correspondences> clustered_corrs;
 
+	//===============
 	//  Using Hough3D
+	//===============
+
 	if (use_hough_)
 	{
-		//
+		//=====================================================
 		//  Compute (Keypoints) Reference Frames only for Hough
-		//
+		//=====================================================
+
 		pcl::PointCloud<RFType>::Ptr model_rf(new pcl::PointCloud<RFType>());
 		pcl::PointCloud<RFType>::Ptr scene_rf(new pcl::PointCloud<RFType>());
 
@@ -571,9 +578,10 @@ int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
 		gc_clusterer.recognize(rototranslations, clustered_corrs);
 	}
 
-	//
+	//=================
 	//  Output results
-	//
+	//=================
+
 	std::cout << "Model instances found: " << rototranslations.size() << std::endl;
 	for (size_t i = 0; i < rototranslations.size(); ++i)
 	{
@@ -592,9 +600,10 @@ int grouping3d(cloud_pointer& cloud1, cloud_pointer& cloud2) {
 		printf("        t = < %0.3f, %0.3f, %0.3f >\n", translation(0), translation(1), translation(2));
 	}
 
-	//
+	//===============
 	//  Visualization
-	//
+	//===============
+
 	pcl::visualization::PCLVisualizer viewer("Correspondence Grouping");
 	viewer.addPointCloud(scene, "scene_cloud");
 
@@ -672,8 +681,6 @@ int main()
 	// Object Declaration
 	//====================
 	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZRGBA>);
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZRGBA>);
 	std::vector<cloud_pointer> p_cloud;
 
 	char keyin;
@@ -747,13 +754,11 @@ int main()
 
 			//========================================
 			// Filter PointCloud (PassThrough Method)
-			//========================================
-			pcl::PassThrough<pcl::PointXYZRGBA> Cloud_Filter; // Create the filtering object
-			Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
-			Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
-			Cloud_Filter.setFilterLimits(0.0, 1.0);      // Set accepted interval values
-			Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
-
+				pcl::PassThrough<pcl::PointXYZRGBA> Cloud_Filter; // Create the filtering object
+				Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
+				Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
+				Cloud_Filter.setFilterLimits(0.0, 0.49);      // Set accepted interval values
+				Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
 			p_cloud.push_back(cloud);
 
 			cout << " Pointcloud successfully generated. " << endl;
@@ -764,18 +769,26 @@ int main()
 
 		}//End-while
 	}
+
 	else if (keyin == 'N' || keyin == 'n') {
 		while (i < 3) {
+			pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
 			cout << "\nReading Pointcloud" << i << endl;
-			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud1);
-			p_cloud.push_back(cloud1);
-			Load_PCDFile(p_cloud.at(i - 1));
-			i++;
-			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud2);
-			p_cloud.push_back(cloud2);
-			Load_PCDFile(p_cloud.at(i - 1));
-			i++;
+			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud);
+			//========================================
+			// Filter PointCloud (PassThrough Method)
+			//========================================
+			if (i == 1) {
+				pcl::PassThrough<pcl::PointXYZRGBA> Cloud_Filter; // Create the filtering object
+				Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
+				Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
+				Cloud_Filter.setFilterLimits(0.0, 0.41);      // Set accepted interval values
+				Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
+			}
 
+			p_cloud.push_back(cloud);
+			Load_PCDFile(p_cloud.at(i - 1));
+			i++;
 		}
 	}
 	else {
