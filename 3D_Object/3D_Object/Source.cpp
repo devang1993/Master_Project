@@ -226,7 +226,7 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	icp.setInputSource(cloud2);
 	icp.setInputTarget(cloud1);
 	icp.setTransformationRotationEpsilon(0.95);
-	icp.setMaxCorrespondenceDistance(0.05);
+	//icp.setMaxCorrespondenceDistance(0.05);
 	icp.align(*cloud);
 	Load_PCDFile(cloud);
 	if (icp.hasConverged())
@@ -269,6 +269,8 @@ cloud_pointer cluster(cloud_pointer& cloud)
 	pcl::PCDWriter writer;
 	seg.setOptimizeCoefficients(true);
 	seg.setModelType(pcl::SACMODEL_PLANE);
+	//seg.setModelType(pcl::SACMODEL_SPHERE);
+	//seg.setModelType(pcl::SACMODEL_CYLINDER);
 	seg.setMethodType(pcl::SAC_RANSAC);
 	seg.setMaxIterations(100);
 	seg.setDistanceThreshold(0.02);
@@ -308,7 +310,7 @@ cloud_pointer cluster(cloud_pointer& cloud)
 
 	std::vector<pcl::PointIndices> cluster_indices;
 	pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
-	ec.setClusterTolerance(0.02); // 2cm
+	ec.setClusterTolerance(0.01); // 2cm
 	ec.setMinClusterSize(100);
 	ec.setMaxClusterSize(25000);
 	ec.setSearchMethod(tree);
@@ -335,6 +337,7 @@ cloud_pointer cluster(cloud_pointer& cloud)
 	Load_PCDFile(cloud);
 	return cloud;
 }
+
 //==============
 // Main function
 //==============
@@ -350,6 +353,8 @@ int main()
 	// Object Declaration
 	//====================
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud1(new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud2(new pcl::PointCloud<pcl::PointXYZRGB>);
 	std::vector<cloud_pointer> p_cloud;
 
 	char keyin;
@@ -427,7 +432,7 @@ int main()
 			pcl::PassThrough<pcl::PointXYZRGB> Cloud_Filter; // Create the filtering object
 			Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
 			Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
-			Cloud_Filter.setFilterLimits(0.0, 0.38);      // Set accepted interval values
+			Cloud_Filter.setFilterLimits(0.0, 1.0);      // Set accepted interval values
 			Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
 
 			p_cloud.push_back(cloud);
@@ -443,18 +448,20 @@ int main()
 	else if (keyin == 'N' || keyin == 'n') {
 		while (i < 3) {
 			cout << "\nReading Pointcloud" << i << endl;
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud);
-			p_cloud.push_back(cloud);
+			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud1);
+			p_cloud.push_back(cloud1);
 			Load_PCDFile(p_cloud.at(i - 1));
 			i++;
+			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud2);
+			p_cloud.push_back(cloud2);
+			Load_PCDFile(p_cloud.at(i - 1));
+			i++;
+
 		}
 	}
 	else {
 		return (-1);
 	}
-	Load_PCDFile(p_cloud[0]);
-	Load_PCDFile(p_cloud[1]);
 
 	PCL_ICP(p_cloud[0], p_cloud[1]); // Run ICP on the pointclouds
 
