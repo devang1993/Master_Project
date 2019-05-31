@@ -18,6 +18,9 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{E7585682-2CC0-4C14-85D3-6D98AF47E402}</ProjectGuid>
@@ -80,7 +83,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\Program Files %28x86%29\PCL 1.9.1\3rdParty\Boost\lib;C:\Program Files %28x86%29\Intel RealSense SDK 2.0\lib\x86;C:\Program Files %28x86%29\PCL 1.9.1\3rdParty\FLANN\lib;C:\Program Files %28x86%29\PCL 1.9.1\3rdParty\VTK\lib;C:\Program Files (x86)\PCL 1.9.1\lib;C:\Program Files (x86)\PCL 1.9.1\3rdParty\Qhull\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>realsense2.lib;pcl_search_debug.lib;pcl_io_debug.lib;pcl_common_debug.lib;pcl_filters_debug.lib;pcl_visualization_debug.lib;libboost_system-vc141-mt-gd-x32-1_68.lib;vtkCommonDataModel-8.1-gd.lib;vtkCommonCore-8.1-gd.lib;vtkCommonMath-8.1-gd.lib;vtkCommonMisc-8.1-gd.lib;vtkCommonSystem-8.1-gd.lib;vtkCommonTransforms-8.1-gd.lib;vtksys-8.1-gd.lib;vtkRenderingCore-8.1-gd.lib;vtkCommonColor-8.1-gd.lib;vtkCommonComputationalGeometry-8.1-gd.lib;vtkCommonExecutionModel-8.1-gd.lib;vtkFiltersCore-8.1-gd.lib;vtkFiltersGeneral-8.1-gd.lib;vtkFiltersGeometry-8.1-gd.lib;vtkFiltersSources-8.1-gd.lib;pcl_segmentation_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>realsense2.lib;pcl_search_debug.lib;pcl_io_debug.lib;pcl_common_debug.lib;pcl_filters_debug.lib;pcl_visualization_debug.lib;libboost_system-vc141-mt-gd-x32-1_68.lib;vtkCommonDataModel-8.1-gd.lib;vtkCommonCore-8.1-gd.lib;vtkCommonMath-8.1-gd.lib;vtkCommonMisc-8.1-gd.lib;vtkCommonSystem-8.1-gd.lib;vtkCommonTransforms-8.1-gd.lib;vtksys-8.1-gd.lib;vtkRenderingCore-8.1-gd.lib;vtkCommonColor-8.1-gd.lib;vtkCommonComputationalGeometry-8.1-gd.lib;vtkCommonExecutionModel-8.1-gd.lib;vtkFiltersCore-8.1-gd.lib;vtkFiltersGeneral-8.1-gd.lib;vtkFiltersGeometry-8.1-gd.lib;vtkFiltersSources-8.1-gd.lib;pcl_segmentation_debug.lib;flann.lib;pcl_recognition_debug.lib;pcl_features_debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -119,9 +122,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Source.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
