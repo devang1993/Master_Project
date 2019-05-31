@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp">
+    <ClCompile Include="..\..\..\..\librealsense-master\wrappers\pcl\pcl-color\rs-pcl-color.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
