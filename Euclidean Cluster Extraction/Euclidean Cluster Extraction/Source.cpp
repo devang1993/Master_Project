@@ -9,7 +9,36 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <pcl/visualization/pcl_visualizer.h>
 
+void Load_PCDFile();
+
+void Load_PCDFile()
+{
+	//==========================
+	// Pointcloud Visualization
+	//==========================
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+	// Create viewer object titled "Captured Frame"
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("Captured Frame"));
+
+	// Set background of viewer to black
+	viewer->setBackgroundColor(0, 0, 0);
+	// Add generated point cloud and identify with string "Cloud"
+	viewer->addPointCloud<pcl::PointXYZRGB>(cloud, "Cloud");
+	// Default size for rendered points
+	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "Cloud");
+	// Viewer Properties
+	viewer->initCameraParameters();  // Camera Parameters for ease of viewing
+
+	cout << endl;
+	cout << "Press [Q] in viewer to continue. " << endl;
+
+	viewer->spin(); // Allow user to rotate point cloud and view it
+
+	// Note: No method to close PC visualizer, pressing Q to continue software flow only solution.
+
+}
 
 int
 main(int argc, char** argv)
@@ -18,6 +47,7 @@ main(int argc, char** argv)
 	pcl::PCDReader reader;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>), cloud_f(new pcl::PointCloud<pcl::PointXYZ>);
 	reader.read("table_scene_lms400.pcd", *cloud);
+	Load_PCDFile();
 	std::cout << "PointCloud before filtering has: " << cloud->points.size() << " data points." << std::endl; //*
 
 	// Create the filtering object: downsample the dataset using a leaf size of 1cm
@@ -95,8 +125,9 @@ main(int argc, char** argv)
 		std::stringstream ss;
 		ss << "cloud_cluster_" << j << ".pcd";
 		writer.write<pcl::PointXYZ>(ss.str(), *cloud_cluster, false); //*
+		Load_PCDFile();
 		j++;
 	}
-
+	system("pause");
 	return (0);
 }
