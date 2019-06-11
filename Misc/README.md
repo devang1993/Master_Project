@@ -17,6 +17,23 @@ Sample .pcd files
 - https://github.com/PointCloudLibrary/data/tree/master/segmentation/mOSD/test
 - https://github.com/jvgomez/irml/tree/master/pointclouds/database/3dmodelsviews
 
+Segmentation
+	Color-based region growing segmentation
+	http://pointclouds.org/documentation/tutorials/region_growing_rgb_segmentation.php#region-growing-rgb-segmentation
+
+	Region growing segmentation
+	http://pointclouds.org/documentation/tutorials/region_growing_segmentation.php#region-growing-segmentation
+
+	Identifying ground returns using ProgressiveMorphologicalFilter segmentation
+	http://pointclouds.org/documentation/tutorials/progressive_morphological_filtering.php#progressive-morphological-filtering
+
+	Conditional Euclidean Clustering
+	http://pointclouds.org/documentation/tutorials/conditional_euclidean_clustering.php#conditional-euclidean-clustering
+
+	Min-Cut Based Segmentation
+	http://pointclouds.org/documentation/tutorials/min_cut_segmentation.php#min-cut-segmentation
+
+
 
 Header files (ICP, correspondence grouping):
 #include <iostream>
