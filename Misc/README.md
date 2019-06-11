@@ -17,6 +17,9 @@ Sample .pcd files
 - https://github.com/PointCloudLibrary/data/tree/master/segmentation/mOSD/test
 - https://github.com/jvgomez/irml/tree/master/pointclouds/database/3dmodelsviews
 
+Visualization
+http://pointclouds.org/documentation/tutorials/pcl_visualizer.php
+
 Segmentation
 	Color-based region growing segmentation
 	http://pointclouds.org/documentation/tutorials/region_growing_rgb_segmentation.php#region-growing-rgb-segmentation
