@@ -5,8 +5,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/thread/thread.hpp>
 #include <string>
+#include <stdlib.h>
 
- // Intel Realsense Headers
+// Intel Realsense Headers
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
 
 // PCL Headers
@@ -157,9 +158,12 @@ bool userInput(void) {
 		}
 		// Condition [N] - Exit Loop and close program
 		else if (takeFrame == 'n' || takeFrame == 'N') {
-			setLoopFlag = false;
+			setLoopFlag = false; 
 			inputCheck = true;
 			takeFrame = 0;
+			cout << "Exiting program..." << endl;
+			Sleep(500);
+			exit(0);
 		}
 		// Invalid Input, prompt user again.
 		else {
@@ -182,10 +186,10 @@ cloud_pointer voxelleaf(cloud_pointer& cloud) {
 
 int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 {
+	float dist;
+
 	// PCL ICP for computation of the transformation matrix
-
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-
 	cout << "\nstarting icp" << endl;
 
 	// Set leaf size
@@ -194,8 +198,10 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 
 	// Setting a initial transformation estimate
 	Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
-	// Define a translation of 6 centimeters on the x axis.
-	transform_2.translation() << 0.0, 0.0, 0.06;
+	// Define a translation of specified distance centimeters on the Z axis.
+	cout << "Enter translation distance in centimeters on the Z axis\t";
+	cin >> dist;
+	transform_2.translation() << 0.0, 0.0, dist/100;
 	// The same rotation matrix as before; theta radians around Z axis
 	//transform_2.rotate(Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
 	// Executing the transformation
@@ -211,15 +217,13 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	icp.align(*cloud);
 	if (icp.hasConverged())
 	{
-		cout << "\n Final transformation matrix is : \n" << icp.getFinalTransformation() << endl;
+		cout << "\n Final transformation matrix is : \n\n" << icp.getFinalTransformation() << endl;
 		float x, y, z, roll, pitch, yaw;
 		auto trafo = icp.getFinalTransformation();
 		Eigen::Transform<float, 3, Eigen::Affine> tROTA(trafo);
 		pcl::getTranslationAndEulerAngles(tROTA, x, y, z, roll, pitch, yaw);
-		cout << "Translational Elements:       x           y           z " << endl;
-		cout << "                          " << x << "  " << y << "  " << z << endl;
-		cout << "Rotational Elements:          Roll     Pitch        Yaw " << endl;
-		cout << "                          " << roll * 57.29577 << "    " << pitch * 57.29577 << "   " << yaw * 57.29577;
+		cout << "\nTranslational Elements:\n\n\tx\t" << x * 100 << "\n\ty\t" << y * 100 << "\n\tz\t" << (z * 100) + dist << endl;
+		cout << "\nRotational Elements:\n\n\tRoll\t" << roll * 57.29577 << "\n\tPitch\t" << pitch * 57.29577 << "\n\tYaw\t" << yaw * 57.29577 << endl;
 		cout << "\nICP has converged, score is " << icp.getFitnessScore() << endl;
 		if (abs(roll) > 0.174533 || abs(pitch) > 0.174533)
 			cout << "Object has deviated more than 10 degrees!!" << endl;
@@ -232,38 +236,6 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 		return (-1);
 	}
 
-}
-
-double
-computeCloudResolution(const pcl::PointCloud<PointType>::ConstPtr &cloud)
-{
-	double res = 0.0;
-	int n_points = 0;
-	int nres;
-	std::vector<int> indices(2);
-	std::vector<float> sqr_distances(2);
-	pcl::search::KdTree<PointType> tree;
-	tree.setInputCloud(cloud);
-
-	for (size_t i = 0; i < cloud->size(); ++i)
-	{
-		if (!std::isfinite((*cloud)[i].x))
-		{
-			continue;
-		}
-		//Considering the second neighbor since the first is the point itself.
-		nres = tree.nearestKSearch(i, 2, indices, sqr_distances);
-		if (nres == 2)
-		{
-			res += sqrt(sqr_distances[1]);
-			++n_points;
-		}
-	}
-	if (n_points != 0)
-	{
-		res /= n_points;
-	}
-	return res;
 }
 
 //==============
@@ -352,11 +324,11 @@ int main()
 		pcl::PassThrough<pcl::PointXYZRGB> Cloud_Filter; // Create the filtering object
 		Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
 		Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
-		Cloud_Filter.setFilterLimits(0.0, 0.455);      // Set accepted interval values
+		Cloud_Filter.setFilterLimits(0.0, 0.46);      // Set accepted interval values
 		Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
 		p_cloud.push_back(cloud);
 
-		cout << " Pointcloud successfully generated. " << endl;
+		cout << "Pointcloud successfully generated. " << endl;
 
 		i++; // Increment File Name
 
