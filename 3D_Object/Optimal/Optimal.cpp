@@ -9,6 +9,7 @@
 
 // Intel Realsense Headers
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
+#include <librealsense2/rs_advanced_mode.hpp>
 
 // PCL Headers
 #include <pcl/point_types.h>
@@ -23,12 +24,10 @@
 #include <pcl/filters/voxel_grid.h>
 
 
-
 using namespace std;
 
-typedef pcl::PointXYZRGBA PointType;
-typedef pcl::PointXYZRGB RGB_Cloud;
-typedef pcl::PointCloud<RGB_Cloud> point_cloud;
+typedef pcl::PointXYZ XYZ_Cloud;
+typedef pcl::PointCloud<XYZ_Cloud> point_cloud;
 typedef point_cloud::Ptr cloud_pointer;
 
 // Prototypes
@@ -36,45 +35,36 @@ bool userInput(void);
 cloud_pointer voxelleaf(cloud_pointer& cloud);
 int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2);
 
+void Load_PCDFile(cloud_pointer& cloud); //added at 17.33 14.06
+
 // Global Variables
 int i = 1; // Index for incremental file name
 
-//======================================================
-// RGB Texture
-// - Function is utilized to extract the RGB data from
-// a single point return R, G, and B values. 
-// Normals are stored as RGB components and
-// correspond to the specific depth (XYZ) coordinate.
-// By taking these normals and converting them to
-// texture coordinates, the RGB components can be
-// "mapped" to each individual point (XYZ).
-//======================================================
-
-
-std::tuple<int, int, int> RGB_Texture(rs2::video_frame texture, rs2::texture_coordinate Texture_XY)
+void Load_PCDFile(cloud_pointer& cloud)
 {
-	// Get Width and Height coordinates of texture
-	int width = texture.get_width();  // Frame width in pixels
-	int height = texture.get_height(); // Frame height in pixels
+	//==========================
+	// Pointcloud Visualization
+	//==========================
+	// Create viewer object titled "Captured Frame"
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("Captured Frame"));
 
-	// Normals to Texture Coordinates conversion
-	int x_value = min(max(int(Texture_XY.u * width + .5f), 0), width - 1);
-	int y_value = min(max(int(Texture_XY.v * height + .5f), 0), height - 1);
+	// Set background of viewer to black
+	viewer->setBackgroundColor(0, 0, 0);
+	// Add generated point cloud and identify with string "Cloud"
+	viewer->addPointCloud<pcl::PointXYZ>(cloud, "Cloud");
+	// Default size for rendered points
+	viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "Cloud");
+	// Viewer Properties
+	viewer->initCameraParameters();  // Camera Parameters for ease of viewing
 
-	int bytes = x_value * texture.get_bytes_per_pixel();   // Get # of bytes per pixel
-	int strides = y_value * texture.get_stride_in_bytes(); // Get line width in bytes
-	int Text_Index = (bytes + strides);
+	cout << endl;
+	cout << "Press [Q] in viewer to continue. " << endl;
 
-	const auto New_Texture = reinterpret_cast<const uint8_t*>(texture.get_data());
+	viewer->spin(); // Allow user to rotate point cloud and view it
 
-	// RGB components to save in tuple
-	int NT1 = New_Texture[Text_Index];
-	int NT2 = New_Texture[Text_Index + 1];
-	int NT3 = New_Texture[Text_Index + 2];
+	// Note: No method to close PC visualizer, pressing Q to continue software flow only solution.
 
-	return std::tuple<int, int, int>(NT1, NT2, NT3);
 }
-
 //===================================================
 //  PCL_Conversion
 // - Function is utilized to fill a point cloud
@@ -82,13 +72,10 @@ std::tuple<int, int, int> RGB_Texture(rs2::video_frame texture, rs2::texture_coo
 //  frame captured using the Realsense.
 //=================================================== 
 
-cloud_pointer PCL_Conversion(const rs2::points& points, const rs2::video_frame& color) {
+cloud_pointer PCL_Conversion(const rs2::points& points) {
 
 	// Object Declaration (Point Cloud)
 	cloud_pointer cloud(new point_cloud);
-
-	// Declare Tuple for RGB value Storage (<t0>, <t1>, <t2>)
-	std::tuple<uint8_t, uint8_t, uint8_t> RGB_Color;
 
 	//================================
 	// PCL Cloud Object Configuration
@@ -115,18 +102,9 @@ cloud_pointer PCL_Conversion(const rs2::points& points, const rs2::video_frame& 
 		cloud->points[i].x = Vertex[i].x;
 		cloud->points[i].y = Vertex[i].y;
 		cloud->points[i].z = Vertex[i].z;
-
-		// Obtain color texture for specific point
-		RGB_Color = RGB_Texture(color, Texture_Coord[i]);
-
-		// Mapping Color (BGR due to Camera Model)
-		cloud->points[i].r = get<2>(RGB_Color); // Reference tuple<2>
-		cloud->points[i].g = get<1>(RGB_Color); // Reference tuple<1>
-		cloud->points[i].b = get<0>(RGB_Color); // Reference tuple<0>
-
 	}
 
-	return cloud; // PCL RGB Point Cloud generated
+	return cloud; // PCL XYZ Point Cloud generated
 }
 
 //========================================
@@ -177,7 +155,7 @@ bool userInput(void) {
 }
 
 cloud_pointer voxelleaf(cloud_pointer& cloud) {
-	pcl::VoxelGrid<RGB_Cloud> grid;
+	pcl::VoxelGrid<XYZ_Cloud> grid;
 	grid.setLeafSize(0.03f, 0.03f, 0.03f);
 	grid.setInputCloud(cloud);
 	grid.filter(*cloud);
@@ -189,7 +167,7 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	float dist;
 
 	// PCL ICP for computation of the transformation matrix
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 	cout << "\nSTARTING ICP..." << endl;
 
 	// Set leaf size
@@ -205,11 +183,11 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	// The same rotation matrix as before; theta radians around Z axis
 	//transform_2.rotate(Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
 	// Executing the transformation
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+	pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud(new pcl::PointCloud<pcl::PointXYZ>());
 	// You can either apply transform_1 or transform_2; they are the same
 	pcl::transformPointCloud(*cloud1, *cloud1, transform_2);
 
-	pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 	icp.setMaximumIterations(50);
 	icp.setInputSource(cloud1);
 	icp.setInputTarget(cloud2);
@@ -252,14 +230,56 @@ int main()
 	//====================
 	// Object Declaration
 	//====================
-	pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+	
+	// Declare object to store Point Cloud
 	std::vector<cloud_pointer> p_cloud;
+
+	// Obtain a list of devices currently present on the system
+	
+	// Create context
+	rs2::context ctx;
+	
+	// Get device
+	auto devices = ctx.query_devices();
+	size_t device_count = devices.size();
+	if (!device_count)
+	{
+		cout << "No device detected. Is it plugged in?\n";
+		return EXIT_SUCCESS;
+	}
+
+	// Get the first connected device
+	auto dev = devices[0];
+
+	// Enter advanced mode
+	if (dev.is<rs400::advanced_mode>())
+	{
+		// Get the advanced mode functionality
+		auto advanced_mode_dev = dev.as<rs400::advanced_mode>();
+
+		// Load and configure .json file to device
+		ifstream t("Default 424x240.json");
+		string str((istreambuf_iterator<char>(t)), istreambuf_iterator<char>());
+		advanced_mode_dev.load_json(str);
+	}
+	else
+	{
+		cout << "Current device doesn't support advanced-mode!\n";
+		return EXIT_FAILURE;
+	}
+
+	// Declare RealSense pipeline, encapsulating the actual device and sensors
+	rs2::pipeline pipe;
+
+	//Contruct a pipeline which abstracts the device
+
+	rs2::device selected_device = dev;
+	auto depth_sensor = selected_device.first<rs2::depth_sensor>();
 
 	// Declare pointcloud object, for calculating pointclouds and texture mappings
 	rs2::pointcloud pc;
 
-	// Declare RealSense pipeline, encapsulating the actual device and sensors
-	rs2::pipeline pipe;
 
 	// Create a configuration for configuring the pipeline with a non default profile
 	rs2::config cfg;
@@ -268,27 +288,11 @@ int main()
 	//======================
 	// Stream configuration
 	//======================
-	cfg.enable_stream(RS2_STREAM_COLOR, 424, 240, RS2_FORMAT_BGR8, 30);
 	cfg.enable_stream(RS2_STREAM_INFRARED, 424, 240, RS2_FORMAT_Y8, 30);
 	cfg.enable_stream(RS2_STREAM_DEPTH, 424, 240, RS2_FORMAT_Z16, 30);
 
 	rs2::pipeline_profile selection = pipe.start(cfg);
 
-	rs2::device selected_device = selection.get_device();
-	auto depth_sensor = selected_device.first<rs2::depth_sensor>();
-
-	if (depth_sensor.supports(RS2_OPTION_EMITTER_ENABLED))
-	{
-		depth_sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 1.f); // Enable emitter
-		depth_sensor.set_option(RS2_OPTION_EMITTER_ENABLED, 0.f); // Disable emitter
-	}
-	if (depth_sensor.supports(RS2_OPTION_LASER_POWER))
-	{
-		// Query min and max values:
-		auto range = depth_sensor.get_option_range(RS2_OPTION_LASER_POWER);
-		depth_sensor.set_option(RS2_OPTION_LASER_POWER, range.max); // Set max power
-		depth_sensor.set_option(RS2_OPTION_LASER_POWER, 0.f); // Disable laser
-	}
 
 	// Begin Stream with default configs
 
@@ -308,26 +312,25 @@ int main()
 		// Capture a single frame and obtain depth + RGB values from it    
 		auto frames = pipe.wait_for_frames();
 		auto depth = frames.get_depth_frame();
-		auto RGB = frames.get_color_frame();
-
-		// Map Color texture to each point
-		pc.map_to(RGB);
 
 		// Generate Point Cloud
 		auto points = pc.calculate(depth);
 
 		// Convert generated Point Cloud to PCL Formatting
-		cloud_pointer cloud = PCL_Conversion(points, RGB);
+		cloud_pointer cloud = PCL_Conversion(points);
 
 		//========================================
 		// Filter PointCloud (PassThrough Method)
-		pcl::PassThrough<pcl::PointXYZRGB> Cloud_Filter; // Create the filtering object
-		Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
-		Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
-		Cloud_Filter.setFilterLimits(0.0, 0.46);      // Set accepted interval values
-		Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
+		//========================================
+		if (i == 1) {
+			pcl::PassThrough<pcl::PointXYZ> Cloud_Filter; // Create the filtering object
+			Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
+			Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
+			Cloud_Filter.setFilterLimits(0.0, 0.45);      // Set accepted interval values
+			Cloud_Filter.filter(*cloud);              // Filtered Cloud Outputted
+		}
 		p_cloud.push_back(cloud);
-
+		Load_PCDFile(cloud);
 		cout << "Pointcloud successfully generated. " << endl;
 
 		i++; // Increment File Name
