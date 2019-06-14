@@ -190,7 +190,7 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 
 	// PCL ICP for computation of the transformation matrix
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-	cout << "\nstarting icp" << endl;
+	cout << "\nSTARTING ICP..." << endl;
 
 	// Set leaf size
 	voxelleaf(cloud1);
@@ -199,7 +199,7 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	// Setting a initial transformation estimate
 	Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
 	// Define a translation of specified distance centimeters on the Z axis.
-	cout << "Enter translation distance in centimeters on the Z axis\t";
+	cout << "\nEnter translation distance in centimeters on the Z axis\t";
 	cin >> dist;
 	transform_2.translation() << 0.0, 0.0, dist/100;
 	// The same rotation matrix as before; theta radians around Z axis
@@ -217,7 +217,7 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	icp.align(*cloud);
 	if (icp.hasConverged())
 	{
-		cout << "\n Final transformation matrix is : \n\n" << icp.getFinalTransformation() << endl;
+		cout << "\nFinal transformation matrix is : \n\n" << icp.getFinalTransformation() << endl;
 		float x, y, z, roll, pitch, yaw;
 		auto trafo = icp.getFinalTransformation();
 		Eigen::Transform<float, 3, Eigen::Affine> tROTA(trafo);
@@ -226,8 +226,8 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 		cout << "\nRotational Elements:\n\n\tRoll\t" << roll * 57.29577 << "\n\tPitch\t" << pitch * 57.29577 << "\n\tYaw\t" << yaw * 57.29577 << endl;
 		cout << "\nICP has converged, score is " << icp.getFitnessScore() << endl;
 		if (abs(roll) > 0.174533 || abs(pitch) > 0.174533)
-			cout << "Object has deviated more than 10 degrees!!" << endl;
-		return EXIT_SUCCESS;
+			cout << "\nObject has deviated more than 10 degrees!!" << endl;
+		return 0;
 	}
 	else
 	{

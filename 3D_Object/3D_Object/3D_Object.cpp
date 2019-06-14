@@ -315,37 +315,37 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 
 }
 
-double
-computeCloudResolution(const pcl::PointCloud<PointType>::ConstPtr &cloud)
-{
-	double res = 0.0;
-	int n_points = 0;
-	int nres;
-	std::vector<int> indices(2);
-	std::vector<float> sqr_distances(2);
-	pcl::search::KdTree<PointType> tree;
-	tree.setInputCloud(cloud);
-
-	for (size_t i = 0; i < cloud->size(); ++i)
-	{
-		if (!std::isfinite((*cloud)[i].x))
-		{
-			continue;
-		}
-		//Considering the second neighbor since the first is the point itself.
-		nres = tree.nearestKSearch(i, 2, indices, sqr_distances);
-		if (nres == 2)
-		{
-			res += sqrt(sqr_distances[1]);
-			++n_points;
-		}
-	}
-	if (n_points != 0)
-	{
-		res /= n_points;
-	}
-	return res;
-}
+//double
+//computeCloudResolution(const pcl::PointCloud<PointType>::ConstPtr &cloud)
+//{
+//	double res = 0.0;
+//	int n_points = 0;
+//	int nres;
+//	std::vector<int> indices(2);
+//	std::vector<float> sqr_distances(2);
+//	pcl::search::KdTree<PointType> tree;
+//	tree.setInputCloud(cloud);
+//
+//	for (size_t i = 0; i < cloud->size(); ++i)
+//	{
+//		if (!std::isfinite((*cloud)[i].x))
+//		{
+//			continue;
+//		}
+//		//Considering the second neighbor since the first is the point itself.
+//		nres = tree.nearestKSearch(i, 2, indices, sqr_distances);
+//		if (nres == 2)
+//		{
+//			res += sqrt(sqr_distances[1]);
+//			++n_points;
+//		}
+//	}
+//	if (n_points != 0)
+//	{
+//		res /= n_points;
+//	}
+//	return res;
+//}
 
 //============================
 //Euclidean Cluster Extraxtion
@@ -791,6 +791,8 @@ int main()
 			// Convert generated Point Cloud to PCL Formatting
 			cloud_pointer cloud = PCL_Conversion(points, RGB);
 
+			Load_PCDFile(cloud);
+
 			//========================================
 			// Filter PointCloud (PassThrough Method)
 			pcl::PassThrough<pcl::PointXYZRGB> Cloud_Filter; // Create the filtering object
@@ -815,10 +817,11 @@ int main()
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 			cout << "\nReading Pointcloud" << i << endl;
 			pcl::io::loadPCDFile("Captured_Frame" + to_string(i) + ".pcd", *cloud);
+			Load_PCDFile(cloud);
+
 			//========================================
 			// Filter PointCloud (PassThrough Method)
 			//========================================
-
 			pcl::PassThrough<pcl::PointXYZRGB> Cloud_Filter; // Create the filtering object
 			Cloud_Filter.setInputCloud(cloud);           // Input generated cloud to filter
 			Cloud_Filter.setFilterFieldName("z");        // Set field name to Z-coordinate
