@@ -355,6 +355,9 @@ int main()
 		rs2::device selected_device = dev;
 		auto depth_sensor = selected_device.first<rs2::depth_sensor>();
 
+		// Declare pointcloud object, for calculating pointclouds and texture mappings	
+		rs2::pointcloud pc;
+
 		// Create a configuration object for configuring the pipeline with a non default profile
 		rs2::config cfg;
 
