@@ -234,7 +234,9 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 
 	// Set leaf size, by passing clouds to post-processing function voxelleaf
 	voxelleaf(cloud1);
+	Load_PCDFile(cloud1);
 	voxelleaf(cloud2);
+	Load_PCDFile(cloud2);
 
 	// Setting a initial transformation estimate
 	Eigen::Affine3f transform = Eigen::Affine3f::Identity();
