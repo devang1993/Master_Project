@@ -438,10 +438,11 @@ int main()
 		PCL_ICP(p_cloud[0], p_cloud[1]);
 
 		std::system("pause");
-		cout << "Would you like to continue? (Y/N)" << endl;
+		cout << "Would you like to run again? (Y/N)" << endl;
 		cin >> userkey;
 		if (userkey == 'N' || userkey == 'n') { break; }
 		std::vector<cloud_pointer>().swap(p_cloud);
+		i=1;
 	} while (userkey == 'Y' || userkey == 'y');
 	return EXIT_SUCCESS;
 }
