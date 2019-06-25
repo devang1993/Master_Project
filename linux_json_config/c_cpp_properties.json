@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/usr/local/include/",
+                "/usr/include/pcl-1.8/",
+                "/usr/include/eigen3/",
+                "/usr/include/vtk-6.3/",
+                "/home/devang/librealsense/examples/",
+                "/home/devang/librealsense/third-party/glfw/include/",
+                "/home/devang/librealsense/third-party/imgui",
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
