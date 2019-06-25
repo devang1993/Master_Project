@@ -256,6 +256,12 @@ int PCL_ICP(cloud_pointer& cloud1, cloud_pointer& cloud2)
 	// Set max number of iterations required for ICP, before convergence
 	icp.setMaximumIterations(50);
 
+	//maximum allowable translation squared difference between two consecutive transformations
+	icp.setTransformationEpsilon(0.005);
+
+	//maximum allowable rotation difference between two consecutive transformations
+	icp.setTransformationRotationEpsilon(0.999);
+
 	// Set source and target point clouds
 	icp.setInputSource(cloud1);
 	icp.setInputTarget(cloud2);
@@ -325,7 +331,10 @@ int main()
 		if (!device_count)
 		{
 			cout << "No device detected. Is it plugged in?\n";
-			return EXIT_SUCCESS;
+			while (!device_count) {
+				auto devices = ctx.query_devices();
+				size_t device_count = devices.size();
+			}
 		}
 
 		// Get the first connected device
@@ -432,6 +441,7 @@ int main()
 		cout << "Would you like to continue? (Y/N)" << endl;
 		cin >> userkey;
 		if (userkey == 'N' || userkey == 'n') { break; }
+		std::vector<cloud_pointer>().swap(p_cloud);
 	} while (userkey == 'Y' || userkey == 'y');
 	return EXIT_SUCCESS;
 }
