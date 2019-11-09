@@ -18,7 +18,7 @@
         "-I",
         "/usr/include/eigen3/",
         "-I",
-        "/usr/include/vtk-6.3/",
+        "/usr/include/vtk-7.1/",
         "-I",
         "/home/devang/librealsense/examples/",
         "-I",
