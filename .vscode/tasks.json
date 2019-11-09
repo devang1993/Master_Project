@@ -14,7 +14,7 @@
         "-I",
         "/usr/local/include/",
         "-I",
-        "/usr/include/pcl-1.8/",
+        "/usr/include/pcl-1.9/",
         "-I",
         "/usr/include/eigen3/",
         "-I",
