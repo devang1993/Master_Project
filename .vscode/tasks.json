@@ -1,63 +1,63 @@
 {
-  "tasks": [
-    {
-      "type": "shell",
-      "label": "g++ build active file",
-      "command": "/usr/bin/g++",
-      "args": [
-        "-g",
-        "${file}",
-        "-o",
-        "${fileDirname}/${fileBasenameNoExtension}",
-        "-I",
-        "/usr/include/",
-        "-I",
-        "/usr/local/include/",
-        "-I",
-        "/usr/include/pcl-1.9/",
-        "-I",
-        "/usr/include/eigen3/",
-        "-I",
-        "/usr/include/vtk-7.1/",
-        "-I",
-        "/home/devang/librealsense/examples/",
-        "-I",
-        "/home/devang/librealsense/third-party/glfw/include/",
-        "-I",
-        "/home/devang/librealsense/third-party/imgui",
-        "-L",
-        "/home/devang/librealsense/build/",
-        "-lrealsense2",
-        "-lGL",
-        "-lGLU",
-        "-lglut",
-        "-lglfw",
-        "-lpcl_search",
-        "-lpcl_io",
-        "-lboost_system",
-        "-lpcl_common",
-        "-lvtkCommonDataModel-7.1",
-        "-lvtkCommonCore-7.1",
-        "-lvtkCommonMath-7.1",
-        "-lvtkRenderingCore-7.1",
-        "-lpcl_visualization",
-        "-lpcl_filters",
-        "-lpthread",
-        "-lpcl_segmentation",
-        "-lpcl_features",
-        "-lflann"
-      ],
-      "options": {
-        "cwd": "/usr/bin"
-      },
-      "problemMatcher": [
-        "$gcc"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    }
-  ],
-  "version": "2.0.0"
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "g++ build active file",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-I",
+                "/usr/include/",
+                "-I",
+                "/usr/local/include/",
+                "-I",
+                "/usr/include/pcl-1.9/",
+                "-I",
+                "/usr/include/eigen3/",
+                "-I",
+                "/usr/include/vtk-7.1/",
+                "-I",
+                "/home/devang/librealsense/examples/",
+                "-I",
+                "/home/devang/librealsense/third-party/glfw/include/",
+                "-I",
+                "/home/devang/librealsense/third-party/imgui",
+                "-L",
+                "/home/devang/librealsense/build/",
+                "-lrealsense2",
+                "-lGL",
+                "-lGLU",
+                "-lglut",
+                "-lglfw",
+                "-lpcl_search",
+                "-lpcl_io",
+                "-lboost_system",
+                "-lpcl_common",
+                "-lvtkCommonDataModel-7.1",
+                "-lvtkCommonCore-7.1",
+                "-lvtkCommonMath-7.1",
+                "-lvtkRenderingCore-7.1",
+                "-lpcl_visualization",
+                "-lpcl_filters",
+                "-lpthread",
+                "-lpcl_segmentation",
+                "-lpcl_features",
+                "-lflann"
+            ],
+            "options": {
+                "cwd": "/usr/bin"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
 }
