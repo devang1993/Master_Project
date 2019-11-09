@@ -4,7 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "/usr/local/include/",
-                "/usr/include/pcl-1.8/",
+                "/usr/include/pcl-1.9/",
                 "/usr/include/eigen3/",
                 "/usr/include/vtk-6.3/",
                 "/home/devang/librealsense/examples/",
