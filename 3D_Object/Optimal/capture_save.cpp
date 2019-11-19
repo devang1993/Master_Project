@@ -71,18 +71,7 @@ int main()
                 cloud->points[i].z = Vertex[i].z;
             }
         }
-        /*
-        // Create the filtering object
-        pcl::PassThrough<pcl::PointXYZ> filter;
-        // Input generated cloud to filter
-        filter.setInputCloud(cloud);
-        // Set field name to Z-coordinate
-        filter.setFilterFieldName("z");
-        // Set accepted interval values (m), beyond which points nullified
-        filter.setFilterLimits(0.0, 0.72);
-        // Filtered Cloud Outputted
-        filter.filter(*savepcd);
-*/
+        
         // Create viewer object titled "Captured Frame"
         boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("Captured Frame"));
 
