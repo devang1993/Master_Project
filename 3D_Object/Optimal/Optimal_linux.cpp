@@ -207,7 +207,7 @@ cloud_pointer voxelleaf(cloud_pointer &cloud)
 {
 	pcl::VoxelGrid<XYZ_Cloud> grid;
 	// Setting desired voxel size
-	grid.setLeafSize(0.03f, 0.03f, 0.03f);
+	grid.setLeafSize(0.01f, 0.01f, 0.01f);
 	grid.setInputCloud(cloud);
 	grid.filter(*cloud);
 	// return 'filtered' point cloud
@@ -233,18 +233,20 @@ int PCL_ICP(cloud_pointer &cloud1, cloud_pointer &cloud2)
 
 	// Set leaf size, by passing clouds to post-processing function voxelleaf
 	voxelleaf(cloud1);
-	Load_PCDFile(cloud1);
+	//Load_PCDFile(cloud1);
 	voxelleaf(cloud2);
-	Load_PCDFile(cloud2);
+	//Load_PCDFile(cloud2);
 
 	// Setting a initial transformation estimate
 	Eigen::Affine3f transform = Eigen::Affine3f::Identity();
-
+	
+	//pcl::computteTransformation()
+	
 	// Define a translation of specified distance centimeters on the Z axis.
 	float dist;
-	cout << "\nEnter translation distance in centimeters on the Z axis\t";
+	cout << "\nEnter translation distance in centimeters on the y axis\t";
 	cin >> dist;
-	transform.translation() << 0.0, 0.0, dist / 100;
+	transform.translation() << 0.0, dist / 100, 0.0;
 
 	// Transforming the source point cloud using above transformation matrix
 	pcl::transformPointCloud(*cloud1, *cloud1, transform);
@@ -253,13 +255,16 @@ int PCL_ICP(cloud_pointer &cloud1, cloud_pointer &cloud2)
 	pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
 
 	// Set max number of iterations required for ICP, before convergence
-	icp.setMaximumIterations(50);
+	icp.setMaximumIterations(100);
 
 	//maximum allowable translation squared difference between two consecutive transformations
-	icp.setTransformationEpsilon(0.005);
+	icp.setTransformationEpsilon(1e-10);
 
 	//maximum allowable rotation difference between two consecutive transformations
-	//icp.setTransformationRotationEpsilon(0.999);
+	//icp.setTransformationRotationEpsilon(0.009);
+
+	// Set the euclidean distance difference epsilon (criterion 3)
+	icp.setEuclideanFitnessEpsilon (1e-6);
 
 	// Set source and target point clouds
 	icp.setInputSource(cloud1);
@@ -286,7 +291,7 @@ int PCL_ICP(cloud_pointer &cloud1, cloud_pointer &cloud2)
 		auto trafo = icp.getFinalTransformation();
 		Eigen::Transform<float, 3, Eigen::Affine> tROTA(trafo);
 		pcl::getTranslationAndEulerAngles(tROTA, x, y, z, roll, pitch, yaw);
-		cout << "\nTranslational Elements:\n\n\tx\t" << x * 100 << "\n\ty\t" << y * 100 << "\n\tz\t" << (z * 100) + dist << endl;
+		cout << "\nTranslational Elements:\n\n\tx\t" << x * 100 << "\n\ty\t" << (y * 100) + dist << "\n\tz\t" << (z * 100) << endl;
 		cout << "\nRotational Elements:\n\n\tRoll\t" << roll * 57.29577 << "\n\tPitch\t" << pitch * 57.29577 << "\n\tYaw\t" << yaw * 57.29577 << endl;
 
 		// Display convergence or fitness score of ICP algorithm
@@ -295,6 +300,53 @@ int PCL_ICP(cloud_pointer &cloud1, cloud_pointer &cloud2)
 		// Display warning message if deviation crosses nominal range
 		if (abs(roll) > 0.174533 || abs(pitch) > 0.174533)
 			cout << "\nObject has deviated more than 10 degrees!!" << endl;
+			// Create viewer object titled "Captured Frame"
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer1(new pcl::visualization::PCLVisualizer("Captured Frame"));
+
+	// Set background of viewer to black
+	viewer1->setBackgroundColor(0, 0, 0);
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> r(cloud1, 255, 0, 0);
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> g(cloud2, 0, 255, 0);
+	pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> b(cloud, 0, 0, 255);
+
+	// Initialize camera parameters with some default values.
+	viewer1->initCameraParameters();
+
+	viewer1->addPointCloud(cloud1,r,"Cloud1");
+	viewer1->addPointCloud(cloud2,g,"Cloud2");
+	//viewer1->addPointCloud(cloud,"Transformed cloud");
+	
+	// Setting default size for rendered points
+	viewer1->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "Cloud1");
+	viewer1->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "Cloud2");
+
+	// Allow user to rotate point cloud and view it
+	viewer1->spin();
+
+	// Create viewer object titled "Captured Frame"
+	boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2(new pcl::visualization::PCLVisualizer("Captured Frame"));
+
+	// Set background of viewer to black
+	viewer2->setBackgroundColor(0, 0, 0);
+
+	// Initialize camera parameters with some default values.
+	viewer2->initCameraParameters();
+	
+	viewer2->addPointCloud(cloud1,r,"Cloud1");
+	//viewer2->addPointCloud(cloud2,"Cloud2");
+	viewer2->addPointCloud(cloud,b,"Transformed Cloud");
+
+	// Setting default size for rendered points
+	viewer2->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "Cloud1");
+	viewer2->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "Transformed Cloud");
+	
+	// Allow user to rotate point cloud and view it
+	viewer2->spin();
+
+	// Note: No method to close PC visualizer, pressing Q to continue software flow only solution.
+	cout << endl;
+	cout << "Press [Q] in viewer to continue. " << endl;
+
 		return 0;
 	}
 	else
@@ -346,7 +398,7 @@ int main()
 			// Get the first connected device
 			auto dev = devices[0];
 			// Enter advanced mode, obtain saved camera configuration file (JSON)
-			if (dev.is<rs400::advanced_mode>())
+/*			if (dev.is<rs400::advanced_mode>())
 			{
 				// Get the advanced mode functionality
 				auto advanced_mode_dev = dev.as<rs400::advanced_mode>();
@@ -362,7 +414,7 @@ int main()
 				cout << "Current device doesn't support advanced-mode!\n";
 				return EXIT_FAILURE;
 			}
-
+*/
 			// Declare RealSense pipeline, encapsulating the actual device and sensors
 			rs2::pipeline pipe;
 
@@ -427,7 +479,7 @@ int main()
 				Cloud_Filter.setFilterFieldName("z");
 
 				// Set accepted interval values (m), beyond which points nullified
-				Cloud_Filter.setFilterLimits(0.0, z);
+				Cloud_Filter.setFilterLimits(0.0, 0.72);
 
 				// Filtered Cloud Outputted
 				Cloud_Filter.filter(*cloud);
