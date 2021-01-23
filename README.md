@@ -1,8 +1,4 @@
 # Master_Project
-angular tilt of objects
-
-
-# Abstract:
 Detection of rotational deviation between two objects represented by point clouds
 by means of implementing the Iterative Closest Point (ICP) Algorithm. The 3D imaging
 device used here is the Intel RealSense Depth Camera D415.
